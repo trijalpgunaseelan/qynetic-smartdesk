@@ -1,0 +1,25 @@
+menu "SmartDesk"
+    config SMARTDESK_WIFI_TX_POWER
+        int "Wi-Fi transmit power cap (quarter-dBm units)"
+        range 8 84
+        default 34
+        help
+            Limit Wi-Fi transmit power after starting the driver. 34 requests
+            8.5 dBm, a conservative default for ESP32-C3 SuperMini boards that
+            time out during authentication at the default high transmit power.
+            The driver rounds to supported hardware power levels.
+    config SMARTDESK_BUILTIN_BOOT
+        bool "Use built-in BOOT button (GPIO9) for navigation"
+        default y
+        help
+            Tap for next page, hold 0.6 seconds for previous, hold two seconds
+            to resume automatic rotation. RESET remains a hardware reset.
+    config SMARTDESK_BUTTON_PREVIOUS
+        int "Previous button GPIO (button to GND)"
+        range 0 5
+        default 3
+    config SMARTDESK_BUTTON_NEXT
+        int "Next button GPIO (button to GND)"
+        range 0 5
+        default 4
+endmenu
