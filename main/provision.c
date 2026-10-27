@@ -4,10 +4,13 @@
 #include "driver/uart.h"
 #include "driver/usb_serial_jtag.h"
 #include "esp_system.h"
+#include "esp_wifi.h"
 #include "sdkconfig.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <sys/time.h>
 esp_err_t sd_wifi_scan(void);
 static char ssid[33],pass[65],token[65];
 static bool ready_ssid,ready_pass,ready_token;
@@ -38,6 +41,25 @@ static void provision(void *unused){
  else if(!strncmp(line,"PASS ",5)&&strlen(line+5)>=8&&strlen(line+5)<=63){strcpy(pass,line+5);ready_pass=true;}
  else if(!strncmp(line,"TOKEN ",6)&&strlen(line+6)>=32&&strlen(line+6)<=64){strcpy(token,line+6);ready_token=true;}
  else if(!strcmp(line,"SAVE")&&ready_ssid&&ready_pass&&ready_token){nvs_handle_t h;if(nvs_open("smartdesk",NVS_READWRITE,&h)==ESP_OK){esp_err_t e=nvs_set_str(h,"ssid",ssid);if(e==ESP_OK)e=nvs_set_str(h,"password",pass);if(e==ESP_OK)e=nvs_set_str(h,"token",token);if(e==ESP_OK)e=nvs_commit(h);nvs_close(h);ESP_LOGI("provision","Provisioning %s",e==ESP_OK?"saved; reboot":"failed");}memset(pass,0,sizeof(pass));memset(token,0,sizeof(token));ready_pass=ready_token=false;}
+ else if(!strncmp(line,"TIME ",5)) {
+  char *end=NULL;long long epoch=strtoll(line+5,&end,10);
+  if(end!=line+5&&!*end&&epoch>=1700000000LL&&epoch<=4102444799LL) {
+   struct timeval value={.tv_sec=(time_t)epoch,.tv_usec=0};
+   ESP_LOGI("provision","Clock %s",settimeofday(&value,NULL)==0?"set from USB; continues offline":"set failed");
+  }else ESP_LOGW("provision","TIME requires UTC epoch seconds (2023-2099)");
+ }
+ else if(!strcmp(line,"WIFI_RESET")) {
+  /* Only driver-owned Wi-Fi settings; app credentials and BLE bonds remain. */
+  esp_err_t result=esp_wifi_restore();
+  ESP_LOGI("provision","Wi-Fi driver reset: %s",esp_err_to_name(result));
+  if(result==ESP_OK){vTaskDelay(pdMS_TO_TICKS(200));esp_restart();}
+ }
+ else if(!strncmp(line,"WIFI_POWER ",11)) {
+  char *end=NULL;long power=strtol(line+11,&end,10);
+  if(end!=line+11&&!*end&&power>=8&&power<=84)
+   ESP_LOGI("provision","Wi-Fi power adjustment: %s",esp_err_to_name(esp_wifi_set_max_tx_power((int8_t)power)));
+  else ESP_LOGW("provision","WIFI_POWER requires 8-84 quarter-dBm units");
+ }
  else if(!strcmp(line,"SCAN")) ESP_LOGI("provision","Wi-Fi scan %s",esp_err_to_name(sd_wifi_scan()));
  else if(!strcmp(line,"REBOOT")){ESP_LOGI("provision","Rebooting");vTaskDelay(pdMS_TO_TICKS(200));esp_restart();}
  else if(!strcmp(line,"UNPAIR")) ESP_LOGI("provision","Bond reset %s",sd_ble_forget_bonds()==ESP_OK?"queued":"unavailable");

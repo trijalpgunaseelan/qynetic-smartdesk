@@ -161,10 +161,26 @@ static void notification_event(const uint8_t bytes[8]) {
     }
     queue[queued++]=next;pump();
 }
+/* Verify the server's CCCD, rather than treating an acknowledged write as
+   proof that iOS enabled the notification stream. */
+static int subscription_verified(uint16_t conn,const struct ble_gatt_error *error,struct ble_gatt_attr *attr,void *arg) {
+    if(!valid_callback(conn)) return 0;
+    if(error->status) {fail(error->status);return 0;}
+    uint8_t expected=subscription_stage==0?2:1;
+    if(!attr||attr->handle!=subscriptions[subscription_stage]->cccd||
+       attr->om==NULL||OS_MBUF_PKTLEN(attr->om)!=2) {fail(BLE_HS_EBADDATA);return 0;}
+    uint8_t value[2];
+    if(os_mbuf_copydata(attr->om,0,2,value)||value[0]!=expected||value[1]!=0) {
+        fail(BLE_HS_EAUTHEN);return 0;
+    }
+    subscription_stage++;subscribe_next();return 0;
+}
 static int subscription_written(uint16_t conn,const struct ble_gatt_error *error,struct ble_gatt_attr *attr,void *arg) {
     if(!valid_callback(conn)) return 0;
     if(error->status) {fail(error->status);return 0;}
-    subscription_stage++;subscribe_next();return 0;
+    int rc=ble_gattc_read(conn,subscriptions[subscription_stage]->cccd,subscription_verified,NULL);
+    if(rc) fail(rc);
+    return 0;
 }
 static int descriptor_found(uint16_t conn,const struct ble_gatt_error *error,uint16_t value,const struct ble_gatt_dsc *dsc,void *arg) {
     if(!valid_callback(conn)) return 0;

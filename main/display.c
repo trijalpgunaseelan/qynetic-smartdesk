@@ -81,7 +81,7 @@ void sd_draw(void) {
     }else switch(page){
     case 0:
         heading("QYNETIC / NOW");
-        if(now<1700000000){sd_oled_text_scaled(3,20,"HELLO",3);sd_oled_text(0,44,"SYNCING THE CLOCK...");}
+        if(now<1700000000){sd_oled_text_scaled(3,20,"HELLO",3);sd_oled_text(0,44,"SET TIME: USB / WIFI");}
         else{strftime(text,sizeof(text),"%H:%M",&t);sd_oled_text_scaled(5,18,text,4);strftime(text,sizeof(text),"%a %d %b",&t);sd_oled_text(0,44,text);}
         break;
     case 1:{

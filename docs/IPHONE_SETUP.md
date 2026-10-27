@@ -1,3 +1,29 @@
+# If iPhone rejects the shortcut file
+
+If Shortcuts says **“Importing unsigned shortcut files is not supported”**, use this one-time setup instead. It creates the shortcut directly on your iPhone and needs no imported file:
+
+1. Keep the existing **SmartDesk Sync** script in Scriptable. Run it once to save the desk address/token and allow Calendar access.
+2. Open **Shortcuts → +**, name it **SmartDesk Auto Sync**.
+3. Add **Wait**, set it to **2 seconds**.
+4. Search for **Scriptable → Run Script**, select **SmartDesk Sync**. Expand the action and set its **Parameter** to the text **both**. Turn **Run in App** off if shown.
+5. Run this shortcut once and allow requested permissions.
+6. Duplicate it as **SmartDesk Battery Sync** and change Parameter to **battery**.
+7. Under **Automation → + → Charger**, create connected and disconnected triggers using **Run Shortcut → SmartDesk Battery Sync**. Select **Run Immediately**. Add Battery Level triggers as needed.
+8. For Calendar updates, create **App → Calendar → Is Closed → Run Immediately → Run Shortcut → SmartDesk Auto Sync** and a morning Time of Day automation.
+
+The script name in the action must match the name in Scriptable. Keep Scriptable installed and the hotspot available. These automations are configured once; routine sync does not require manually launching the script. iOS determines when automations run; this does not provide continuous background sync.
+
+## Notifications are a separate Bluetooth connection
+
+Shortcuts sync battery and Calendar; they cannot forward other apps’ notifications. On the iPhone:
+
+1. Open **Settings → Bluetooth → Qynetic SmartDesk → ⓘ**, enable **Share System Notifications**.
+2. After changing that setting, turn Bluetooth off and on in **Settings**, then reconnect the desk. Leave the existing pairing intact.
+3. For the app being tested, enable **Settings → Notifications → [app] → Allow Notifications → Notification Centre**. Temporarily turn off Focus and Scheduled Summary for the test.
+4. Lock the iPhone and receive a new message from another device. Check the dashboard’s Bluetooth notification counters.
+
+If **source_events** remains zero, the iPhone has not delivered an ANCS event. A local **Test OLED** message only tests rendering. If events arrive but details do not, record **data_bytes**, **decoded**, and **last_error** to diagnose the attribute request. Firmware verifies notification subscription descriptors before reporting ready; even ready does not prove an app notification has arrived.
+
 # Ready-to-add SmartDesk shortcuts
 
 Open these links in Safari on the iPhone while the desk is on your hotspot:

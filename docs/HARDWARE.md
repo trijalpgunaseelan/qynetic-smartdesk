@@ -28,3 +28,17 @@ Use two normally-open momentary push buttons. With power disconnected, wire one 
 Button inputs are debounced for 40 ms and polled every 20 ms. The OLED refreshes at up to 10 Hz, keeping the clock and navigation responsive. Pairing codes take priority over navigation. Other timed overlays can be suppressed temporarily by using the buttons.
 
 Pin assignments are configurable under **menuconfig → SmartDesk**. Defaults GPIO3/4 avoid the OLED and USB pins; review board pin usage before choosing other pins. Physical button operation requires the buttons to be wired and has not been confirmed remotely.
+
+## Clock without a network
+
+Once set, the ESP32 system clock continues while the board is powered, even with Wi-Fi and Internet unavailable. No network is required for normal ticking. To initialize time using the Mac over USB instead of NTP:
+
+```sh
+python3 tools/set_clock.py --port /dev/cu.usbmodem101
+```
+
+This requires Python's pyserial package and a correctly set Mac clock. Close any serial monitor first. The USB command is `TIME <UTC epoch seconds>`. It does not change Wi-Fi credentials or reboot the board.
+
+A full power loss removes the ESP32's time reference. No saved timestamp can account for time spent unplugged. For correct time after an offline cold start, add a battery-backed RTC such as a DS3231 and firmware support; the current board has no such module configured. Until time is set, the OLED prompts `SET TIME: USB / WIFI` rather than showing a false date.
+
+Wi-Fi credentials are loaded from saved settings at boot. If the hotspot is unavailable, retries continue automatically with 1, 2, 4, then 8-second delays between attempts. No button press or script is required to reconnect when the saved network becomes available. Actual connection time includes the Wi-Fi scan/authentication time. The iPhone must allow hotspot connections; firmware cannot turn on the iPhone hotspot. Clock rendering does not depend on Wi-Fi status.

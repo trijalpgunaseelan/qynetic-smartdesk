@@ -1,5 +1,7 @@
 # Importable SmartDesk shortcuts
 
+If iOS rejects a downloaded file, use the [no-import setup](../docs/IPHONE_SETUP.md#if-iphone-rejects-the-shortcut-file). The unsigned source files are build inputs, not installable shortcuts.
+
 Signed artifacts are embedded in the ESP32 firmware and available in iPhone Safari:
 
 - `http://<desk-ip>/smartdesk-sync.shortcut`: **SmartDesk Auto Sync** — battery, charging, and today's first 16 Calendar events.
